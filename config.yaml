@@ -1,0 +1,61 @@
+# TruthLens — configuración (todo es opcional; estos son los valores por defecto)
+
+llm:
+  # Proveedor alojado (rápido, no carga modelos en tu equipo): groq | cerebras | openrouter | ollama | custom
+  provider: groq
+  # model: openai/gpt-oss-20b          # vacío = modelo por defecto del proveedor (`doctor` comprueba que existe)
+  # base_url: https://…/v1             # solo con provider: custom
+  # api_key_env: GROQ_API_KEY          # vacío = la variable del preset (GROQ_API_KEY, CEREBRAS_API_KEY, OPENROUTER_API_KEY)
+  timeout_s: 60
+  max_retries: 3                       # reintentos ante 429 / 5xx / timeout
+  keep_alive: 30m                      # solo Ollama: mantiene el modelo cargado en memoria
+  warmup_timeout_s: 300                # solo Ollama: tiempo máximo para la carga inicial
+
+scrape:
+  timeout_s: 20
+  max_articles: 5          # en portadas/secciones: cuántos artículos seguir
+  min_article_chars: 500   # menos texto que esto → se trata como página índice
+  max_body_chars: 3000
+
+search:
+  provider: auto           # auto | searxng | tavily | ddgs
+  searxng_url: http://localhost:8080
+  tavily_key_env: TAVILY_API_KEY
+  max_results: 8
+  fetch_top: 3
+  fetch_chars: 2500
+  timeout_s: 15
+
+factcheck:
+  enabled: true
+  api_key_env: GOOGLE_FACTCHECK_API_KEY
+  language: es             # "" para cualquier idioma
+  page_size: 5
+
+risk:
+  verdict_min_confidence: 0.7
+  min_trusted_sources: 1       # fuentes de confianza que debe citar un "falso/engañoso"
+  trusted_trust_level: 0.7
+  max_claims_per_item: 2
+  # Vectores de estilo: añade los tuyos (id + descripción). El LLM debe citar el texto literal.
+  style_vectors:
+    - id: biased
+      description: "Lenguaje cargado, encuadre unilateral, omisión evidente de contexto relevante o atribución de intenciones sin pruebas."
+      min_confidence: 0.75
+    - id: fallacious
+      description: "Falacias lógicas claras (ad hominem, falso dilema, hombre de paja, generalización apresurada, pendiente resbaladiza, apelación a la emoción en lugar de datos)."
+      min_confidence: 0.75
+    - id: hate
+      description: "Deshumaniza o incita a la hostilidad/violencia contra personas por origen, religión, género, orientación sexual, discapacidad u otra característica protegida. La crítica a ideas o políticos NO cuenta."
+      min_confidence: 0.8
+    # - id: clickbait
+    #   description: "Titular que promete más de lo que el contenido sustenta."
+    #   min_confidence: 0.8
+
+low_credibility_csv: data/low_credibility.csv   # opcional (p. ej. Iffy.news / CRED-1, columna "domain")
+
+# Lista inicial (opinable): edítala a tu criterio.
+trusted_domains:
+  factchecker: [maldita.es, newtral.es, verifica.efe.com, factcheck.afp.com, snopes.com, politifact.com, fullfact.org, factcheck.org, edmo.eu, euvsdisinfo.eu, eufactcheck.eu]
+  reference: [who.int, europa.eu, un.org, ine.es, boe.es, aemet.es, sanidad.gob.es, nasa.gov, cdc.gov, nih.gov, worldbank.org, imf.org, oecd.org]
+  press: [reuters.com, apnews.com, efe.com, bbc.com, elpais.com, rtve.es, europapress.es, lavanguardia.com, elmundo.es, abc.es, theguardian.com, nytimes.com, france24.com, dw.com]

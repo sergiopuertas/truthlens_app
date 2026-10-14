@@ -1,0 +1,8 @@
+httpx>=0.27
+pydantic>=2.6
+pyyaml>=6.0
+trafilatura>=2.0
+lxml>=5.0
+python-dotenv>=1.0
+ddgs>=9.0          # búsqueda web sin clave (respaldo)
+pytest>=8.0
