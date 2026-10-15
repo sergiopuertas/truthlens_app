@@ -1,53 +1,85 @@
-# TruthLens (prototipo)
+# TruthLens — aplicación de escritorio para macOS
 
-Le das una URL (artículo, portada/sección o post de red social); extrae el texto, verifica las afirmaciones con fact-checks y búsqueda web, y señala si algo es falso, engañoso, sesgado, falaz o incita al odio, con explicación y fuentes.
+TruthLens analiza artículos, portadas/secciones y publicaciones de redes sociales. Extrae afirmaciones verificables, las contrasta con fact-checks y fuentes web, y busca señales de información falsa o engañosa, sesgos, falacias e incitación al odio.
 
-## Instalación
+Esta versión conserva el motor de análisis original y añade una aplicación de barra de menús para macOS: se abre desde el icono `TL`, muestra una ventana compacta, permite ajustar los parámetros y enseña una rueda animada, porcentaje y estado durante el análisis. Cuando termina, la ventana se amplía para mostrar el informe con afirmaciones y fuentes.
 
-```bash
-python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
-pip install -r requirements.txt                                  # y rellena las claves
-python -m truthlens doctor                             # comprueba claves, modelo y búsqueda
-```
+## Inicio rápido en macOS
 
-Claves (en `.env`):
-- `GROQ_API_KEY` (console.groq.com, capa gratuita): el LLM, alojado, sin cargar modelos en tu equipo.
-- `GOOGLE_FACTCHECK_API_KEY`: clave de API de Google Cloud con "Fact Check Tools API" activada.
-- Búsqueda web: `pip install ddgs` ya basta (sin clave); mejor `TAVILY_API_KEY` o SearXNG.
-
-## Uso
+Necesitas macOS y Python 3.11 o 3.12. Desde Terminal, dentro de la carpeta del proyecto:
 
 ```bash
-python -m truthlens https://www.rtve.es/noticias/verificartve/        # equivale a `check <url>`
-python -m truthlens check https://x.com/usuario/status/123 --json
-python -m truthlens check https://medio.es/seccion --max-articles 3
-python -m truthlens text "El Gobierno prohibirá el efectivo mañana"    # texto pegado
+python3 -m venv .venv-desktop
+source .venv-desktop/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python run_desktop.py
 ```
 
-## Qué soporta la entrada
+La app aparecerá como `TL` en la barra de menús. Selecciona **Abrir TruthLens**. Para detenerla, usa **Salir** desde ese menú.
 
-| Origen | Cómo |
-|---|---|
-| Artículo web | `trafilatura` (texto principal) |
-| Portada / sección | detecta que hay poco texto y sigue hasta `scrape.max_articles` titulares |
-| X/Twitter | oEmbed público |
-| Bluesky, Mastodon, Telegram, Reddit | API pública de cada uno |
-| Facebook, Instagram, TikTok, Threads | solo metaetiquetas públicas; casi siempre exigen login → se avisa y se usa `text` |
-| Webs con JavaScript/paywall | no soportado (error claro); siguiente paso posible: navegador headless |
+## Crear una app instalable (.app)
 
-## Proveedor LLM (`config.yaml → llm`)
+En macOS, ejecuta:
 
-`groq` (por defecto) · `cerebras` · `openrouter` · `ollama` (local) · `custom` (cualquier API compatible con OpenAI, con `base_url` y `model`). Los ids de modelo cambian: `doctor` comprueba que el configurado existe y lista alternativas. Ante 429/5xx reintenta con espera; con Ollama precarga el modelo (`keep_alive`) antes de la primera consulta.
+```bash
+./build_macos.sh
+```
 
-## Cómo decide alertar
+El paquete se crea en `dist/TruthLens.app`. Puedes moverlo a `/Applications`. La compilación debe hacerse en un Mac; no es posible generar un bundle macOS nativo desde Linux/Windows. La primera apertura puede estar sujeta a los avisos de seguridad habituales de macOS para aplicaciones compiladas localmente.
 
-- **Falso / engañoso**: solo si el verificador cita ≥1 fuente de confianza (tiers en `config.yaml`) y confianza ≥ 0.7; si no, es "no verificable".
-- **Sesgo / falacia / odio** (y los vectores que añadas): el LLM debe dar una cita literal del texto; si no aparece, se descarta.
+## Configuración y claves
 
-## Privacidad
+El archivo `.env` real no forma parte de este paquete. Así se evita incluir claves privadas accidentalmente. La aplicación busca credenciales en este orden:
 
-Ahora el texto de cada artículo y las afirmaciones se envían al proveedor LLM elegido (antes todo era local). Revisa sus condiciones de uso de datos; para mantenerlo local usa `provider: ollama`.
+1. La ruta indicada por `TRUTHLENS_ENV_FILE`, si la has definido.
+2. `.env` en la carpeta del proyecto (útil al ejecutar `run_desktop.py`).
+3. `~/Library/Application Support/TruthLens/.env` (recomendado para la app instalada).
 
-## Tests
+En el primer arranque se copia una plantilla a `~/Library/Application Support/TruthLens/.env.example`. Duplica esa plantilla, llama al duplicado `.env` y rellénalo localmente. Nunca compartas ese archivo ni lo añadas al zip de distribución.
 
-`pytest -q` (21 tests, sin red ni modelo).
+Variables compatibles:
+
+- `GROQ_API_KEY`: proveedor Groq (opción inicial).
+- `CEREBRAS_API_KEY`: proveedor Cerebras.
+- `OPENROUTER_API_KEY`: proveedor OpenRouter.
+- `GOOGLE_FACTCHECK_API_KEY`: API de Google Fact Check Tools.
+- `TAVILY_API_KEY`: búsqueda web opcional; sin ella se puede utilizar el buscador de respaldo instalado con las dependencias.
+
+Ollama no necesita clave, pero requiere que el servicio local esté en marcha y que el modelo configurado exista. El selector de proveedor no crea credenciales ni instala modelos por sí solo.
+
+La configuración persistente de la app se guarda en `~/Library/Application Support/TruthLens/config.yaml`. Al primer arranque se copia allí `config.yaml`; tus cambios a ese archivo se mantienen entre versiones. Las claves no se copian a la app compilada.
+
+## Qué puedes configurar desde la interfaz
+
+- **Entrada:** URL o texto pegado.
+- **Proveedor IA:** Groq, Cerebras, OpenRouter u Ollama.
+- **Artículos:** cuántos seguir cuando el enlace es una portada o sección.
+- **Afirmaciones:** máximo de afirmaciones extraídas por contenido.
+- **Idioma de fact-checks:** español, inglés o todos.
+- **Confianza mínima:** umbral para alertas de afirmaciones refutadas/engañosas.
+- **Análisis de estilo:** activar/desactivar sesgos, falacias y posible incitación al odio.
+
+## Privacidad y límites
+
+La extracción del artículo se realiza desde el equipo, pero el texto y las afirmaciones que se comprueban se envían al proveedor de IA elegido. Las búsquedas y la consulta a Google Fact Check también pueden enviar consultas a servicios externos. Revisa sus políticas de datos. Para no enviar el texto a un proveedor de IA alojado, configura Ollama y usa un modelo local; las búsquedas externas seguirán pudiendo enviar consultas fuera del equipo.
+
+Las alertas son una ayuda para la verificación, no una prueba definitiva. En la salida aparecen los razonamientos disponibles y las fuentes usadas.
+
+## Uso por terminal (opcional)
+
+La interfaz no reemplaza los comandos originales:
+
+```bash
+python -m truthlens doctor
+python -m truthlens check https://medio.es/noticia
+python -m truthlens text "El Gobierno prohibirá el efectivo mañana"
+```
+
+## Pruebas
+
+```bash
+pytest -q
+```
+
+La suite principal usa dobles/mocks y está pensada para ejecutarse sin llamar a servicios externos ni cargar modelos.

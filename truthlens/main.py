@@ -4,6 +4,7 @@ import argparse
 import json
 import logging
 import sys
+from collections.abc import Callable
 
 import httpx
 from dotenv import load_dotenv
@@ -19,12 +20,18 @@ from .risk import RiskAnalyzer
 from .scraper import ScrapeError, Scraper
 
 
-def build_pipeline(cfg: Config, warmup: bool = True) -> Pipeline:
+def build_pipeline(cfg: Config, warmup: bool = True,
+                   progress_callback: Callable[[int, str], None] | None = None) -> Pipeline:
+    if progress_callback:
+        progress_callback(3, "Configurando el proveedor de IA…")
     llm = OpenAICompatLLM(cfg.llm)
     if warmup:
+        if progress_callback:
+            progress_callback(8, "Preparando el modelo (si es local, puede tardar la primera vez)…")
         llm.warmup()  # solo hace algo con Ollama
     cred = Credibility(cfg.trusted_domains, cfg.low_credibility_csv)
-    return Pipeline(cfg, llm, Retriever(cfg, cred), RiskAnalyzer(llm, cfg), Scraper(cfg.scrape))
+    return Pipeline(cfg, llm, Retriever(cfg, cred), RiskAnalyzer(llm, cfg), Scraper(cfg.scrape),
+                    progress_callback=progress_callback)
 
 
 def run_doctor(cfg: Config) -> None:

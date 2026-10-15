@@ -319,3 +319,18 @@ def test_pipeline_check_url_isolates_failures():
     pipe.analyze = flaky
     reps = pipe.check_url("https://x.example")
     assert reps[0].error == "boom" and reps[1].error == "" and "No se pudo analizar" in format_report(reps)
+
+
+def test_pipeline_reports_progress_for_desktop_ui():
+    class OneItem:
+        def scrape(self, url):
+            return [ARTICLE_ITEM]
+
+    pipe = build(Verdict(label="unverifiable", confidence=0.4), [], scraper=OneItem())
+    updates = []
+    pipe.progress_callback = lambda percent, message: updates.append((percent, message))
+    pipe.check_url("https://x.example")
+    assert updates[0][0] == 5
+    assert updates[-1] == (100, "Análisis completado")
+    assert all(0 <= percent <= 100 for percent, _ in updates)
+    assert [percent for percent, _ in updates] == sorted(percent for percent, _ in updates)
