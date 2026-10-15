@@ -4,7 +4,7 @@ import html as htmllib
 import logging
 import re
 from urllib.parse import urldefrag, urlparse
-
+import certifi
 import httpx
 from lxml import html as LH
 
@@ -60,7 +60,7 @@ class Scraper:
     def __init__(self, cfg: ScrapeCfg, http: httpx.Client | None = None):
         self.cfg = cfg
         self.http = http or httpx.Client(timeout=cfg.timeout_s, follow_redirects=True,
-                                         headers={"User-Agent": UA, "Accept-Language": "es,en;q=0.8"})
+                                         headers={"User-Agent": UA, "Accept-Language": "es,en;q=0.8"}, verify=certifi.where())
 
     # -- entrada ----------------------------------------------------------------------
     def scrape(self, url: str) -> list[NewsItem]:

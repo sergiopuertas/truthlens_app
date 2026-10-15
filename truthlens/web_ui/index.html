@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>TruthLens</title>
+  <style>
+    :root {
+      --ink: #17223b;
+      --muted: #68748b;
+      --line: #e3e8f1;
+      --paper: #ffffff;
+      --canvas: #f4f6fb;
+      --blue: #3156d8;
+      --blue-dark: #2444b7;
+      --blue-soft: #edf1ff;
+      --teal: #087f73;
+      --teal-soft: #e6f7f3;
+      --amber: #925600;
+      --amber-soft: #fff4df;
+      --red: #b42332;
+      --red-soft: #fff0f1;
+      --shadow: 0 8px 28px rgba(30, 49, 89, .07);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--canvas);
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 540px; background: var(--canvas); font-size: 13px; }
+    button, input, textarea, select { font: inherit; }
+    button, select, input[type="range"], input[type="checkbox"] { cursor: pointer; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+      outline: 3px solid rgba(49, 86, 216, .22); outline-offset: 2px;
+    }
+    .topbar {
+      height: 48px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; background: rgba(255,255,255,.93); border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand-mark {
+      width: 29px; height: 29px; display: grid; place-items: center; border-radius: 11px;
+      color: #fff; font-size: 12px; font-weight: 800; letter-spacing: -.5px;
+      background: linear-gradient(145deg, #4669ed, #263fa8); box-shadow: 0 4px 10px rgba(49,86,216,.22);
+    }
+    .brand-name { font-size: 15px; font-weight: 750; letter-spacing: -.3px; }
+    .brand-sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    .local-status { display: flex; align-items: center; gap: 7px; color: #526079; font-size: 11px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #18a77b; box-shadow: 0 0 0 3px #e4f7ef; }
+    .quiet-button { color: #53617c; border: 0; background: transparent; padding: 7px 9px; border-radius: 7px; }
+    .quiet-button:hover { color: var(--ink); background: #f1f3f9; }
+    main { max-width: 1180px; padding: 12px 14px 18px; margin: 0 auto; }
+    .hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .eyebrow { color: var(--blue); text-transform: uppercase; font-size: 9px; font-weight: 800; letter-spacing: 1.1px; margin-bottom: 4px; }
+    h1 { margin: 0; font-size: 21px; line-height: 1.15; letter-spacing: -.6px; font-weight: 760; }
+    .hero p { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 8px 0 0; max-width: 560px; }
+    .privacy-note { min-width: 160px; border: 1px solid #d9e4f7; border-radius: 10px; padding: 10px 12px; background: #f9fbff; color: #566581; font-size: 10.5px; line-height: 1.45; }
+    .privacy-note strong { display: block; margin-bottom: 3px; color: #334567; font-size: 11px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-items: start; }
+    .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+    .panel-header { padding: 11px 13px; border-bottom: 1px solid #edf0f6; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .panel-title { margin: 0; font-size: 13px; font-weight: 750; letter-spacing: -.15px; }
+    .panel-subtitle { color: var(--muted); font-size: 10.5px; margin-top: 4px; }
+    .step-chip { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 8px; background: var(--blue-soft); color: var(--blue); font-size: 11px; font-weight: 800; }
+    .panel-body { padding: 12px 13px 13px; }
+    .mode-switch { display: inline-flex; padding: 3px; background: #f0f2f8; border-radius: 9px; gap: 2px; margin-bottom: 15px; }
+    .mode-button { border: 0; padding: 7px 14px; border-radius: 7px; background: transparent; color: #66728a; font-size: 11px; font-weight: 650; }
+    .mode-button.active { color: var(--blue); background: #fff; box-shadow: 0 1px 4px rgba(27,42,78,.12); }
+    .field-label { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 7px; font-size: 11px; color: #33415d; font-weight: 700; }
+    .field-hint { color: #8a94a8; font-size: 10px; font-weight: 450; }
+    textarea {
+      display: block; width: 100%; min-height: 76px; resize: vertical; border: 1px solid #dce2ee;
+      border-radius: 9px; background: #fcfdff; color: var(--ink); padding: 12px 13px; line-height: 1.5;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    textarea:focus, select:focus { border-color: #8ea3f5; box-shadow: 0 0 0 3px rgba(49,86,216,.08); outline: 0; }
+    textarea::placeholder { color: #a4adbd; }
+    .input-help { margin-top: 7px; color: #7a859b; font-size: 10.5px; line-height: 1.45; }
+    .form-error { margin-top: 8px; padding: 9px 10px; background: var(--red-soft); border: 1px solid #ffd9dc; border-radius: 8px; color: var(--red); font-size: 11px; line-height: 1.45; }
+    .form-error[hidden] { display: none; }
+    .analyze-button {
+      width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 9px;
+      min-height: 42px; border: 0; border-radius: 9px; color: white; background: var(--blue);
+      font-size: 12px; font-weight: 750; box-shadow: 0 5px 13px rgba(49,86,216,.2); transition: .15s;
+    }
+    .analyze-button:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .analyze-button:disabled { cursor: wait; opacity: .72; transform: none; }
+    .button-icon { font-size: 16px; line-height: 1; }
+    .progress-panel { margin-top: 13px; border-radius: 9px; padding: 11px 12px; background: #f7f9ff; border: 1px solid #e4eaff; }
+    .progress-panel[hidden] { display: none; }
+    .progress-top { display: flex; justify-content: space-between; gap: 12px; font-size: 10.5px; color: #53617d; margin-bottom: 8px; }
+    #progressText { display: flex; align-items: center; gap: 7px; }
+    .spinner { width: 11px; height: 11px; border-radius: 50%; border: 2px solid #cdd7ff; border-top-color: var(--blue); animation: spin .8s linear infinite; display: none; }
+    .busy .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-track { height: 5px; border-radius: 99px; background: #e1e7fa; overflow: hidden; }
+    .progress-value { width: 0%; height: 100%; background: linear-gradient(90deg, #3b61ed, #19a6a0); border-radius: 99px; transition: width .3s; }
+    .settings-body { padding: 12px 13px 13px; }
+    .field { margin-bottom: 10px; }
+    select {
+      display: block; width: 100%; appearance: none; border: 1px solid #dfe4ef; border-radius: 8px;
+      background: #fff; color: #273653; padding: 9px 30px 9px 10px; font-size: 11px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='m2 4 4 4 4-4' fill='none' stroke='%23717d94' stroke-width='1.4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+    }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .range-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 9px; }
+    .range-value { font-size: 11px; color: var(--blue); font-weight: 800; background: var(--blue-soft); border-radius: 6px; padding: 4px 7px; }
+    input[type="range"] { width: 100%; accent-color: var(--blue); margin: 1px 0 0; }
+    .range-labels { display: flex; justify-content: space-between; color: #929bae; font-size: 9px; margin-top: 4px; }
+    .checkbox-list { display: grid; gap: 8px; }
+    .check-row { display: flex; align-items: flex-start; gap: 8px; color: #43516c; font-size: 11px; line-height: 1.35; }
+    .check-row input { accent-color: var(--blue); margin: 1px 0 0; }
+    .check-row small { color: #8a94a8; display: block; font-size: 10px; margin-top: 2px; }
+    .setting-divider { border: 0; border-top: 1px solid #edf0f6; margin: 16px 0; }
+    .aside-note { margin-top: 16px; padding: 13px 14px; background: #f7f9fd; border: 1px solid #e5eaf3; border-radius: 11px; }
+    .aside-note-title { font-size: 11px; font-weight: 750; color: #3b4c6d; margin-bottom: 6px; }
+    .aside-note p { margin: 0; color: #718099; font-size: 10.5px; line-height: 1.55; }
+    .aside-note + .aside-note { margin-top: 9px; }
+    .keyboard-hint { display: flex; justify-content: center; gap: 5px; color: #909aab; font-size: 10px; margin-top: 10px; }
+    kbd { font-family: inherit; font-size: 9px; padding: 2px 5px; border: 1px solid #d9dfeb; border-radius: 4px; background: #fff; color: #6f7b93; }
+    .results { margin-top: 18px; }
+    .results[hidden] { display: none; }
+    .results-heading { padding: 17px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .results-title-group { display: flex; align-items: center; gap: 10px; }
+    .result-icon { display: grid; place-items: center; width: 30px; height: 30px; background: var(--teal-soft); color: var(--teal); border-radius: 9px; font-size: 15px; }
+    .results-heading h2 { margin: 0; font-size: 14px; letter-spacing: -.2px; }
+    .results-heading p { margin: 4px 0 0; font-size: 10.5px; color: var(--muted); }
+    .results-content { padding: 16px 19px 20px; display: grid; gap: 13px; }
+    .report-card { border: 1px solid var(--line); border-radius: 11px; overflow: hidden; }
+    .report-card-header { padding: 14px 15px; background: #fafbfe; border-bottom: 1px solid #edf0f6; }
+    .report-title { margin: 0; font-size: 13px; line-height: 1.45; font-weight: 750; overflow-wrap: anywhere; }
+    .report-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 7px; color: #7d879a; font-size: 10px; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .report-body { padding: 15px; display: grid; gap: 15px; }
+    .report-section-title { text-transform: uppercase; font-size: 9.5px; color: #697792; font-weight: 800; letter-spacing: .8px; margin-bottom: 8px; }
+    .claim-card, .flag-card { border: 1px solid #e7eaf2; border-radius: 9px; padding: 11px 12px; margin-top: 7px; }
+    .claim-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+    .claim-text { color: #293754; line-height: 1.5; font-size: 11.5px; font-weight: 650; overflow-wrap: anywhere; }
+    .pill { display: inline-flex; align-items: center; border-radius: 99px; padding: 4px 7px; font-size: 9px; font-weight: 800; white-space: nowrap; }
+    .pill.good { color: var(--teal); background: var(--teal-soft); }
+    .pill.bad { color: var(--red); background: var(--red-soft); }
+    .pill.warn { color: var(--amber); background: var(--amber-soft); }
+    .pill.neutral { color: #59667f; background: #eff2f7; }
+    .confidence { color: #65728c; font-size: 10px; margin-left: 5px; }
+    .reasoning { margin-top: 7px; color: #64718a; line-height: 1.55; font-size: 10.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .sources { display: grid; gap: 5px; margin-top: 9px; }
+    .source-row { padding: 7px 9px; border-radius: 7px; background: #f8f9fc; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+    .source-link { font-size: 10.5px; font-weight: 650; overflow-wrap: anywhere; }
+    .source-meta { display: block; color: #9099ab; font-size: 9px; margin-top: 2px; }
+    .source-open { color: #8590a5; font-size: 13px; flex-shrink: 0; }
+    .flag-card { border-color: #f3dfb8; background: #fffdf8; }
+    .flag-quote { padding-left: 9px; border-left: 2px solid #e9ba61; color: #6f5a38; font-size: 10.5px; line-height: 1.5; margin-top: 8px; }
+    .empty-state { padding: 16px 14px; text-align: center; color: #6c7a91; font-size: 11px; line-height: 1.55; border: 1px dashed #dbe2ee; border-radius: 9px; background: #fbfcff; }
+    .analysis-error { border: 1px solid #ffd9dc; border-radius: 9px; background: var(--red-soft); color: var(--red); padding: 14px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+    .footer { padding: 18px 2px 0; display: flex; justify-content: space-between; gap: 12px; color: #9aa3b2; font-size: 9.5px; }
+
+    .settings-panel { overflow: visible; }
+    .settings-summary { list-style: none; display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 12px 14px; font-size: 12px; font-weight: 700; color: #33415d; }
+    .settings-summary::-webkit-details-marker { display: none; }
+    .settings-summary > span:first-child { color: var(--blue); font-size: 15px; }
+    .summary-current { margin-left: auto; color: #8a94a8; font-size: 10px; font-weight: 500; }
+    details[open] .settings-summary { border-bottom: 1px solid #edf0f6; }
+    details[open] .summary-current { display: none; }
+    .input-help { display: none !important; }
+    .field-label { margin-bottom: 5px; }
+    .topbar-right .local-status { display: none; }
+    .results { margin-top: 12px; }
+    .footer { display: none; }
+    @media (max-width: 680px) { .two-col { grid-template-columns: 1fr 1fr; } .topbar { padding: 0 12px; } }
+    @media (max-width: 820px) {
+      body { min-width: 540px; }
+      main { padding: 10px 12px 16px; }
+      .topbar { padding: 0 18px; }
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .hero { align-items: flex-start; flex-direction: column; }
+      .privacy-note { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">TL</div>
+      <div><div class="brand-name">TruthLens</div><div class="brand-sub">Verificación y contexto</div></div>
+    </div>
+    <div class="topbar-right">
+      <div class="local-status"><span class="status-dot"></span><span>Aplicación de escritorio</span></div>
+      <button class="quiet-button" id="quitButton" title="Salir de TruthLens">Salir ↗</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Análisis de información</div>
+        <h1>Comprueba antes de compartir.</h1>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="panel" aria-labelledby="contentPanelTitle">
+        <div class="panel-header">
+          <div><h2 class="panel-title" id="contentPanelTitle">Comprobar contenido</h2></div>
+          <span class="step-chip">01</span>
+        </div>
+        <div class="panel-body">
+          <div class="mode-switch" role="group" aria-label="Tipo de entrada">
+            <button type="button" class="mode-button active" id="urlMode" aria-pressed="true">↗ Enlace</button>
+            <button type="button" class="mode-button" id="textMode" aria-pressed="false">≡ Texto</button>
+          </div>
+          <label class="field-label" for="contentInput"><span id="inputLabel">URL de la noticia o publicación</span><span class="field-hint" id="inputCounter">0 caracteres</span></label>
+          <textarea id="contentInput" spellcheck="false" placeholder="https://medio.es/noticia…" aria-describedby="inputHelp"></textarea>
+          <div class="input-help" id="inputHelp" hidden></div>
+          <div class="form-error" id="inputError" role="alert" hidden></div>
+          <button type="button" class="analyze-button" id="analyzeButton"><span class="button-icon">✳</span><span id="buttonLabel">Comprobar contenido</span></button>
+          <div class="progress-panel" id="progressPanel" hidden>
+            <div class="progress-top"><span id="progressText"><span class="spinner"></span><span id="statusText">Preparando análisis…</span></span><strong id="progressPercent">0 %</strong></div>
+            <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack"><div class="progress-value" id="progressValue"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <aside>
+        <section class="panel settings-panel" aria-labelledby="settingsPanelTitle">
+          <details id="settingsDetails">
+            <summary class="settings-summary"><span>⚙</span><span id="settingsPanelTitle">Opciones de análisis</span><span class="summary-current">Predeterminado</span></summary>
+            <div class="settings-body">
+              <div class="field">
+                <label class="field-label" for="providerSelect">Proveedor de IA</label>
+                <select id="providerSelect">
+                  <option value="">Según configuración</option><option value="groq">Groq</option><option value="cerebras">Cerebras</option><option value="openrouter">OpenRouter</option><option value="ollama">Ollama (local)</option>
+                </select>
+              </div>
+              <div class="two-col">
+                <div class="field"><label class="field-label" for="articlesSelect">Artículos</label><select id="articlesSelect"></select></div>
+                <div class="field"><label class="field-label" for="claimsSelect">Afirmaciones por artículo</label><select id="claimsSelect"></select></div>
+              </div>
+              <div class="two-col">
+                <div class="field"><label class="field-label" for="languageSelect">Idioma</label>
+                  <select id="languageSelect"><option value="es">Español</option><option value="en">Inglés</option><option value="">Todos</option></select>
+                </div>
+                <div class="field"><label class="field-label" for="confidenceSelect">Confianza mínima</label>
+                  <select id="confidenceSelect"><option value="0.5">50 %</option><option value="0.6">60 %</option><option value="0.65">65 %</option><option value="0.7">70 %</option><option value="0.75">75 %</option><option value="0.8">80 %</option><option value="0.85">85 %</option><option value="0.9">90 %</option><option value="0.95">95 %</option></select>
+                </div>
+              </div>
+              <div class="field" style="margin-bottom:0">
+                <label class="field-label" for="styleSelect">Alertas de estilo</label>
+                <select id="styleSelect">
+                  <option value="all">Todas las señales</option><option value="biased">Solo sesgos</option><option value="fallacious">Solo falacias</option><option value="hate">Solo odio</option><option value="biased,fallacious">Sesgos y falacias</option><option value="biased,hate">Sesgos y odio</option><option value="fallacious,hate">Falacias y odio</option><option value="none">Sin alertas de estilo</option>
+                </select>
+              </div>
+            </div>
+          </details>
+        </section>
+      </aside>
+    </div>
+
+    <section class="panel results" id="resultsPanel" aria-labelledby="resultsTitle" hidden>
+      <div class="results-heading">
+        <div class="results-title-group"><div class="result-icon">✓</div><div><h2 id="resultsTitle">Informe de verificación</h2><p id="resultsSummary">El resultado aparecerá aquí.</p></div></div>
+        <button class="quiet-button" id="newCheckButton">Nueva comprobación ↺</button>
+      </div>
+      <div class="results-content" id="resultsContent"></div>
+    </section>
+
+  </main>
+
+  <script>
+    (() => {
+      const $ = (id) => document.getElementById(id);
+      const state = { mode: "url", busy: false };
+      const bridge = (payload) => {
+        try {
+          const handler = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.truthlens;
+          if (handler) handler.postMessage(payload);
+        } catch (_) { /* A static preview remains usable for UI inspection. */ }
+      };
+      const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[char]));
+      const validExternalUrl = (raw) => {
+        try { const url = new URL(String(raw || "")); return ["http:", "https:"].includes(url.protocol) ? url.href : ""; }
+        catch (_) { return ""; }
+      };
+      const linkMarkup = (raw, title) => {
+        const url = validExternalUrl(raw);
+        if (!url) return "";
+        const visible = title || url;
+        return `<a href="${escapeHtml(url)}" data-external="${escapeHtml(url)}">${escapeHtml(visible)}</a>`;
+      };
+      const verdictMeta = (label) => ({
+        supported: ["Respaldada", "good"], refuted: ["Falsa", "bad"],
+        misleading: ["Engañosa", "warn"], unverifiable: ["No verificable", "neutral"]
+      }[label] || [label || "Sin etiqueta", "neutral"]);
+      const vectorLabel = (value) => ({ biased: "Posible sesgo", fallacious: "Posibles falacias", hate: "Posible incitación al odio", false: "Información falsa", misleading: "Engañosa / sin contexto" }[value] || value || "Alerta");
+
+      function setMode(mode) {
+        state.mode = mode;
+        const isUrl = mode === "url";
+        $("urlMode").classList.toggle("active", isUrl);
+        $("textMode").classList.toggle("active", !isUrl);
+        $("urlMode").setAttribute("aria-pressed", String(isUrl));
+        $("textMode").setAttribute("aria-pressed", String(!isUrl));
+        $("inputLabel").textContent = isUrl ? "URL de la noticia o publicación" : "Texto o afirmación que quieres comprobar";
+        $("contentInput").placeholder = isUrl ? "https://medio.es/noticia…" : "Pega aquí la afirmación, mensaje o fragmento que quieres analizar…";
+        $("inputHelp").textContent = isUrl
+          ? "Admite artículos, portadas, secciones y enlaces públicos a redes sociales."
+          : "Se analizará el texto pegado; no se intentará extraer contenido de una URL.";
+        $("inputError").hidden = true;
+        $("inputError").textContent = "";
+        $("contentInput").focus();
+      }
+      function setBusy(busy) {
+        state.busy = !!busy;
+        $("analyzeButton").disabled = state.busy;
+        $("buttonLabel").textContent = state.busy ? "Analizando contenido…" : "Comprobar contenido";
+        $("analyzeButton").querySelector(".button-icon").textContent = state.busy ? "◌" : "✳";
+        $("progressPanel").hidden = !state.busy && Number($("progressPercent").textContent.replace(/\D/g, "")) === 0;
+        $("progressPanel").classList.toggle("busy", state.busy);
+      }
+      function setProgress(percent, message) {
+        const value = Math.max(0, Math.min(100, Number(percent) || 0));
+        $("progressPanel").hidden = false;
+        $("progressValue").style.width = `${value}%`;
+        $("progressPercent").textContent = `${Math.round(value)} %`;
+        $("progressTrack").setAttribute("aria-valuenow", String(Math.round(value)));
+        $("statusText").textContent = message || "Analizando…";
+        if (value >= 100) $("progressPanel").classList.remove("busy");
+      }
+      function showInputError(message) {
+        $("inputError").textContent = message || "No se ha podido continuar.";
+        $("inputError").hidden = false;
+        $("contentInput").focus();
+      }
+      function clearInputError() { $("inputError").hidden = true; $("inputError").textContent = ""; }
+      function clearResults() { $("resultsPanel").hidden = true; $("resultsContent").replaceChildren(); }
+      function showFatalMessage(message) {
+        setBusy(false);
+        showInputError(message);
+        setProgress(0, "Revisa la configuración");
+      }
+      function showAnalysisError(message) {
+        $("resultsPanel").hidden = false;
+        $("resultsSummary").textContent = "La comprobación no ha terminado correctamente.";
+        $("resultsContent").innerHTML = `<div class="analysis-error"><strong>No se pudo completar el análisis</strong><br><br>${escapeHtml(message)}</div>`;
+        bridge({ action: "resize", mode: "results" });
+        $("resultsPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      function renderSources(sources) {
+        if (!Array.isArray(sources) || sources.length === 0) return "";
+        return `<div class="sources">${sources.map((source) => {
+          const title = source.title || source.domain || "Fuente externa";
+          const link = linkMarkup(source.url, title);
+          const meta = [source.domain, source.tier, source.rating].filter(Boolean).join(" · ");
+          return `<div class="source-row"><div><div class="source-link">${link || escapeHtml(title)}</div>${meta ? `<span class="source-meta">${escapeHtml(meta)}</span>` : ""}</div><span class="source-open" aria-hidden="true">↗</span></div>`;
+        }).join("")}</div>`;
+      }
+      function renderClaim(claim) {
+        const [label, tone] = verdictMeta(claim.label);
+        const confidence = Math.round(Math.max(0, Math.min(1, Number(claim.confidence) || 0)) * 100);
+        return `<div class="claim-card"><div class="claim-top"><div class="claim-text">${escapeHtml(claim.claim || "Afirmación sin texto")}</div><div><span class="pill ${tone}">${escapeHtml(label)}</span><span class="confidence">${confidence}%</span></div></div>${claim.reasoning ? `<div class="reasoning">${escapeHtml(claim.reasoning)}</div>` : ""}${renderSources(claim.sources)}</div>`;
+      }
+      function renderFlag(flag) {
+        const confidence = Math.round(Math.max(0, Math.min(1, Number(flag.confidence) || 0)) * 100);
+        return `<div class="flag-card"><div class="claim-top"><div class="claim-text">${escapeHtml(vectorLabel(flag.vector))}</div><span class="pill warn">Confianza ${confidence}%</span></div>${flag.claim ? `<div class="reasoning"><strong>Afirmación:</strong> ${escapeHtml(flag.claim)}</div>` : ""}${flag.quote ? `<div class="flag-quote">“${escapeHtml(flag.quote)}”</div>` : ""}${flag.explanation ? `<div class="reasoning">${escapeHtml(flag.explanation)}</div>` : ""}${renderSources(flag.sources)}</div>`;
+      }
+      function renderReport(report) {
+        const item = report.item || {};
+        const title = item.headline || "Contenido analizado";
+        const meta = [item.outlet, item.platform].filter(Boolean).join(" · ");
+        const itemUrl = validExternalUrl(item.url);
+        const itemLink = itemUrl ? `<div class="report-meta">${linkMarkup(itemUrl, item.url)}</div>` : "";
+        const claims = Array.isArray(report.claims) ? report.claims : [];
+        const flags = Array.isArray(report.flags) ? report.flags : [];
+        if (report.error) {
+          return `<article class="report-card"><header class="report-card-header"><h3 class="report-title">${escapeHtml(title)}</h3>${meta ? `<div class="report-meta">${escapeHtml(meta)}</div>` : ""}${itemLink}</header><div class="report-body"><div class="analysis-error">No se pudo analizar este elemento: ${escapeHtml(report.error)}</div></div></article>`;
+        }
+        const claimsMarkup = claims.length
+          ? claims.map(renderClaim).join("")
+          : `<div class="empty-state">No se encontraron afirmaciones verificables en este contenido.</div>`;
+        const flagsMarkup = flags.length
+          ? flags.map(renderFlag).join("")
+          : `<div class="empty-state">No se han detectado las señales de estilo seleccionadas.</div>`;
+        return `<article class="report-card"><header class="report-card-header"><h3 class="report-title">${escapeHtml(title)}</h3>${meta ? `<div class="report-meta">${escapeHtml(meta)}</div>` : ""}${itemLink}</header><div class="report-body"><section><div class="report-section-title">Afirmaciones verificadas · ${claims.length}</div>${claimsMarkup}</section><section><div class="report-section-title">Alertas de estilo · ${flags.length}</div>${flagsMarkup}</section></div></article>`;
+      }
+      function showResults(result) {
+        const reports = Array.isArray(result.reports) ? result.reports : [];
+        const flagged = reports.filter((report) => Array.isArray(report.flags) && report.flags.length > 0).length;
+        $("resultsSummary").textContent = `${reports.length} elemento(s) analizado(s) · ${flagged} con alertas.`;
+        $("resultsContent").innerHTML = reports.length
+          ? reports.map(renderReport).join("")
+          : `<div class="empty-state">El análisis no ha devuelto elementos. Prueba con otro enlace o pega el texto directamente.</div>`;
+        $("resultsPanel").hidden = false;
+        bridge({ action: "resize", mode: "results" });
+        $("resultsPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      function setInitialConfig(config) {
+        const providerTitles = { groq: "Groq", cerebras: "Cerebras", openrouter: "OpenRouter", ollama: "Ollama" };
+        const configOption = $("providerSelect").querySelector('option[value=""]');
+        configOption.textContent = `Según configuración · ${providerTitles[config.provider] || config.provider || "proveedor actual"}`;
+        $("providerSelect").value = "";
+        $("articlesSelect").innerHTML = Array.from({ length: 10 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join("");
+        $("claimsSelect").innerHTML = Array.from({ length: 5 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join("");
+        $("articlesSelect").value = String(config.articles || 3);
+        $("claimsSelect").value = String(config.claims || 2);
+        const confidence = String(Number(config.confidence) || 0.7);
+        const confidenceOptions = Array.from($("confidenceSelect").options).map((option) => option.value);
+        $("confidenceSelect").value = confidenceOptions.includes(confidence) ? confidence : "0.7";
+        $("languageSelect").value = ["es", "en", ""].includes(config.language) ? config.language : "es";
+        const selected = new Set(config.style_vectors || []);
+        const styleChoice = selected.size === 3 ? "all" : selected.size === 0 ? "none" : [...selected].sort().join(",");
+        $("styleSelect").value = styleChoice;
+        setProgress(0, "Listo para analizar");
+        $("progressPanel").hidden = true;
+      }
+      function beginAnalysis() {
+        if (state.busy) return;
+        clearInputError();
+        const value = $("contentInput").value.trim();
+        if (!value) { showInputError("Introduce una URL o pega el texto que quieres comprobar."); return; }
+        if (state.mode === "url") {
+          try {
+            const candidate = new URL(value.includes("://") ? value : `https://${value}`);
+            if (!["http:", "https:"].includes(candidate.protocol) || !candidate.hostname.includes(".")) throw new Error("invalid");
+          } catch (_) { showInputError("La URL no parece válida. Introduce una dirección web completa, por ejemplo https://medio.es/noticia."); return; }
+        }
+        const styleChoice = $("styleSelect").value;
+        const styleVectors = styleChoice === "all" ? ["biased", "fallacious", "hate"] : (styleChoice === "none" ? [] : styleChoice.split(","));
+        const options = {
+          provider: $("providerSelect").value,
+          articles: Number($("articlesSelect").value),
+          claims: Number($("claimsSelect").value),
+          confidence: Number($("confidenceSelect").value),
+          language: $("languageSelect").value,
+          style_vectors: styleVectors
+        };
+        clearResults();
+        setBusy(true);
+        setProgress(0, "Preparando análisis…");
+        bridge({ action: "analyze", value, isUrl: state.mode === "url", options });
+      }
+
+      $("urlMode").addEventListener("click", () => setMode("url"));
+      $("textMode").addEventListener("click", () => setMode("text"));
+      $("analyzeButton").addEventListener("click", beginAnalysis);
+      $("contentInput").addEventListener("input", () => { $("inputCounter").textContent = `${$("contentInput").value.length.toLocaleString("es-ES")} caracteres`; });
+      $("contentInput").addEventListener("keydown", (event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key === "Enter") { event.preventDefault(); beginAnalysis(); }
+      });
+      $("quitButton").addEventListener("click", () => bridge({ action: "quit" }));
+      $("newCheckButton").addEventListener("click", () => {
+        clearResults(); clearInputError(); $("contentInput").value = ""; $("inputCounter").textContent = "0 caracteres";
+        $("progressPanel").hidden = true; setProgress(0, "Listo para analizar"); $("contentInput").focus();
+        bridge({ action: "resize", mode: "compact" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+      document.addEventListener("click", (event) => {
+        const anchor = event.target.closest("a[data-external]");
+        if (!anchor) return;
+        event.preventDefault();
+        bridge({ action: "open_url", url: anchor.dataset.external });
+      });
+
+      // Native code calls these functions after the page has loaded and as the analysis runs.
+      window.TruthLens = { setInitialConfig, setBusy, setProgress, showInputError, clearInputError, clearResults, showFatalMessage, showAnalysisError, showResults };
+      window.addEventListener("DOMContentLoaded", () => bridge({ action: "ready" }));
+    })();
+  </script>
+</body>
+</html>

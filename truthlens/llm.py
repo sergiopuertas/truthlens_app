@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import certifi
 import logging
 import os
 import re
@@ -47,7 +48,7 @@ class OpenAICompatLLM:
         self.key = os.environ.get(key_env, "").strip() if key_env else ""
         if key_env and not self.key:
             raise LLMError(f"Falta la variable {key_env} (ponla en .env). Proveedor: {cfg.provider}")
-        self.http = http or httpx.Client(timeout=cfg.timeout_s)
+        self.http = http or httpx.Client(timeout=cfg.timeout_s,verify=certifi.where(),)
         self.sleep = sleep
         self._json_mode = True
 

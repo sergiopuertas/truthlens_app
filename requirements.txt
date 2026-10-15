@@ -6,7 +6,8 @@ lxml>=5.0
 python-dotenv>=1.0
 ddgs>=9.0          # búsqueda web sin clave (respaldo)
 pytest>=8.0
-
-# Solo para la aplicación de barra de menús de macOS
+certifi
+# Dependencias de la interfaz de barra de menús de macOS.
 pyobjc-framework-Cocoa>=10.0; sys_platform == "darwin"
+pyobjc-framework-WebKit>=10.0; sys_platform == "darwin"
 py2app>=0.28; sys_platform == "darwin"

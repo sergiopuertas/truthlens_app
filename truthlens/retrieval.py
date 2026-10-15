@@ -4,6 +4,7 @@ import logging
 from typing import Protocol
 
 import httpx
+import certifi
 
 from .config import Config
 from .credibility import Credibility, domain_of
@@ -100,7 +101,7 @@ class Retriever:
 
     def __init__(self, cfg: Config, cred: Credibility, http: httpx.Client | None = None):
         self.cfg, self.cred = cfg, cred
-        self.http = http or httpx.Client(timeout=cfg.search.timeout_s, follow_redirects=True, headers=UA)
+        self.http = http or httpx.Client(timeout=cfg.search.timeout_s, follow_redirects=True, headers=UA,verify=certifi.where())
         self.search = make_search(cfg, self.http)
         self.fc_key = cfg.secret(cfg.factcheck.api_key_env)
 
